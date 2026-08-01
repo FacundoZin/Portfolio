@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { createPortal } from "react-dom"
 
 interface DayData {
   date: string
@@ -11,6 +12,7 @@ interface DayData {
 
 interface ApiResponse {
   contributions: DayData[][]
+  availableYears: number[]
 }
 
 const LEVEL_MAP: Record<string, number> = {
@@ -35,6 +37,9 @@ export function GitHubContributions({ username }: { username: string }) {
   const [loading, setLoading] = useState(true)
   const [tooltip, setTooltip] = useState<{ x: number; y: number; text: string } | null>(null)
   const [isDark, setIsDark] = useState(false)
+  const [selectedYear, setSelectedYear] = useState<number | null>(null)
+  const [availableYears, setAvailableYears] = useState<number[]>([])
+  const [yearDropdownOpen, setYearDropdownOpen] = useState(false)
 
   useEffect(() => {
     setIsDark(document.documentElement.classList.contains("dark"))
@@ -46,18 +51,46 @@ export function GitHubContributions({ username }: { username: string }) {
   }, [])
 
   useEffect(() => {
-    fetch(`/api/contributions?username=${username}`)
+    setLoading(true)
+    const params = new URLSearchParams({ username })
+    if (selectedYear) params.set("year", String(selectedYear))
+
+    fetch(`/api/contributions?${params}`)
       .then<ApiResponse>((r) => r.json())
       .then((data) => {
-        if (!data.contributions || !data.contributions.length) {
-          setLoading(false)
-          return
+        setWeeks(data.contributions ?? [])
+        if (data.availableYears?.length) {
+          setAvailableYears((prev) => {
+            const merged = new Set([...prev, ...data.availableYears])
+            return [...merged].sort((a, b) => b - a)
+          })
         }
-        setWeeks(data.contributions)
         setLoading(false)
       })
       .catch(() => setLoading(false))
-  }, [username])
+
+    fetch(`/api/contributions?username=${username}&discoverYears=true`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.availableYears?.length) {
+          setAvailableYears((prev) => {
+            const merged = new Set([...prev, ...data.availableYears])
+            return [...merged].sort((a, b) => b - a)
+          })
+        }
+      })
+      .catch(() => {})
+  }, [username, selectedYear])
+
+  const handleYearChange = (year: number) => {
+    setSelectedYear(year)
+    setYearDropdownOpen(false)
+  }
+
+  const totalContributions = weeks.reduce(
+    (sum, week) => sum + week.reduce((s, day) => s + day.contributionCount, 0),
+    0
+  )
 
   const cells = isDark ? DARK_CELLS : LIGHT_CELLS
 
@@ -84,8 +117,47 @@ export function GitHubContributions({ username }: { username: string }) {
     }
   })
 
+  const yearsToShow = availableYears.length ? availableYears : [new Date().getFullYear()]
+
   return (
     <div className="relative">
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-sm text-muted-foreground">
+          {totalContributions.toLocaleString()} contributions in {selectedYear ? selectedYear : "the last year"}
+        </span>
+
+        <div className="relative">
+          <button
+            onClick={() => setYearDropdownOpen(!yearDropdownOpen)}
+            className="flex items-center gap-1 px-2 py-0.5 text-xs font-semibold text-muted-foreground bg-transparent border border-border rounded-md hover:bg-accent/50 transition-colors cursor-pointer"
+          >
+            {selectedYear ?? "Last year"}
+            <svg width="8" height="8" viewBox="0 0 8 8" className={`transition-transform ${yearDropdownOpen ? "rotate-180" : ""}`}>
+              <path d="M0 2 L4 6 L8 2" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+
+          {yearDropdownOpen && (
+            <>
+              <div className="fixed inset-0 z-40" onClick={() => setYearDropdownOpen(false)} />
+              <div className="absolute right-0 top-full mt-1 z-50 min-w-[80px] py-1 bg-popover border border-border rounded-md shadow-md">
+                {yearsToShow.map((year) => (
+                  <button
+                    key={year}
+                    onClick={() => handleYearChange(year)}
+                    className={`w-full px-3 py-1 text-left text-xs hover:bg-accent transition-colors cursor-pointer ${
+                      year === selectedYear ? "font-semibold text-foreground" : "text-muted-foreground"
+                    }`}
+                  >
+                    {year}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+
       <div className="overflow-x-auto scrollbar-thin pb-2 sm:pb-0 max-w-full">
         <div className="inline-flex">
           <div
@@ -161,7 +233,7 @@ export function GitHubContributions({ username }: { username: string }) {
         <span>More</span>
       </div>
 
-      {tooltip && (
+      {tooltip && createPortal(
         <div
           className="fixed z-50 px-2.5 py-1.5 rounded-md bg-foreground text-background text-xs whitespace-nowrap pointer-events-none shadow-lg"
           style={{
@@ -171,7 +243,8 @@ export function GitHubContributions({ username }: { username: string }) {
           }}
         >
           {tooltip.text}
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   )
