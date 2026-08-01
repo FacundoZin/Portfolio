@@ -122,7 +122,7 @@ export function GitHubContributions({ username }: { username: string }) {
   return (
     <div className="relative">
       <div className="flex items-center justify-between mb-2">
-        <span className="text-sm text-muted-foreground">
+        <span className="text-xs text-muted-foreground">
           {totalContributions.toLocaleString()} contributions in {selectedYear ? selectedYear : "the last year"}
         </span>
 
