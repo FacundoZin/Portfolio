@@ -9,7 +9,11 @@ interface TerminalLine {
   type: "input" | "output" | "error" | "welcome";
 }
 
-export default function Terminal() {
+interface TerminalProps {
+  onOpenPalette?: () => void
+}
+
+export default function Terminal({ onOpenPalette }: TerminalProps) {
   const { dict: t } = useLanguage()
   const [isOpen, setIsOpen] = useState(false)
   const [history, setHistory] = useState<TerminalLine[]>([
@@ -39,6 +43,30 @@ export default function Terminal() {
 
     const inputLine: TerminalLine = { text: `facundozin ~ % ${cmd}`, type: "input" }
 
+    if (trimmed === "palette" || trimmed === "cmdk") {
+      setHistory((prev) => [...prev, inputLine,
+        { text: "Opening command palette...", type: "output" },
+      ])
+      onOpenPalette?.()
+      return
+    }
+
+    if (trimmed.startsWith("goto ")) {
+      const section = trimmed.slice(5).trim()
+      const sections = ["intro", "work", "education", "thoughts", "connect"]
+      if (sections.includes(section)) {
+        document.getElementById(section)?.scrollIntoView({ behavior: "smooth" })
+        setHistory((prev) => [...prev, inputLine,
+          { text: `Navigating to ${section}...`, type: "output" },
+        ])
+      } else {
+        setHistory((prev) => [...prev, inputLine,
+          { text: `Section "${section}" not found. Available: ${sections.join(", ")}`, type: "error" },
+        ])
+      }
+      return
+    }
+
     switch (trimmed) {
       case "help":
         setHistory((prev) => [...prev, inputLine,
@@ -47,6 +75,8 @@ export default function Terminal() {
           { text: "  projects - List main software development projects", type: "output" },
           { text: "  skills   - Show primary technical stack", type: "output" },
           { text: "  cv       - Download curriculum vitae", type: "output" },
+          { text: "  goto     - Navigate to section (e.g. goto work)", type: "output" },
+          { text: "  palette  - Open command palette (⌘K)", type: "output" },
           { text: "  clear    - Clear the terminal screen", type: "output" },
         ])
         break
@@ -90,7 +120,7 @@ export default function Terminal() {
     }
   }
 
-  const commands = ["about", "projects", "skills", "cv", "clear", "help"]
+  const commands = ["about", "projects", "skills", "cv", "goto", "palette", "clear", "help"]
 
   const suggestion = input && commands.find(c => c.startsWith(input.toLowerCase()) && c !== input.toLowerCase()) || ""
 

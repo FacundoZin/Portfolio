@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react"
 import { Github, ExternalLink } from "lucide-react"
 import Terminal from "../components/Terminal"
 import LanguageToggle from "../components/LanguageToggle"
+import CommandPalette from "../components/CommandPalette"
 import { useLanguage } from "../lib/language-context"
 import TechTicker from "../components/TechTicker"
 import { GitHubContributions } from "../components/GitHubContributions"
@@ -15,8 +16,9 @@ export default function Home() {
   const email = "facundozin10@gmail.com"
   const [isDark, setIsDark] = useState(true)
   const [activeSection, setActiveSection] = useState("")
+  const [isPaletteOpen, setIsPaletteOpen] = useState(false)
   const sectionsRef = useRef<(HTMLElement | null)[]>([])
-  const { dict: t } = useLanguage()
+  const { dict: t, toggleLanguage } = useLanguage()
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", isDark)
@@ -46,9 +48,32 @@ export default function Home() {
     setIsDark(!isDark)
   }
 
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault()
+        setIsPaletteOpen((o) => !o)
+      }
+    }
+    window.addEventListener("keydown", handler)
+    return () => window.removeEventListener("keydown", handler)
+  }, [])
+
   return (
     <div className="min-h-screen bg-background text-foreground relative">
-      <div className="fixed top-6 right-6 z-20">
+      <div className="fixed top-6 right-6 z-20 flex items-center gap-3">
+        <button
+          onClick={() => setIsPaletteOpen(true)}
+          className="hidden sm:flex items-center justify-center w-9 h-9 text-muted-foreground/50 border border-border/40 rounded-lg bg-muted/30 hover:bg-muted/60 hover:text-muted-foreground hover:border-muted-foreground/30 transition-all duration-200 cursor-pointer"
+          aria-label="Open command palette"
+        >
+          <svg className="w-4 h-4" viewBox="0 0 16 16" fill="currentColor">
+            <rect x="1" y="1" width="6" height="6" rx="1.5" />
+            <rect x="9" y="1" width="6" height="6" rx="1.5" />
+            <rect x="1" y="9" width="6" height="6" rx="1.5" />
+            <rect x="9" y="9" width="6" height="6" rx="1.5" />
+          </svg>
+        </button>
         <LanguageToggle />
       </div>
 
@@ -620,7 +645,13 @@ export default function Home() {
       </main>
 
       <div className="fixed bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-background via-background/80 to-transparent pointer-events-none"></div>
-      <Terminal />
+      <Terminal onOpenPalette={() => setIsPaletteOpen(true)} />
+      <CommandPalette
+        isOpen={isPaletteOpen}
+        onClose={() => setIsPaletteOpen(false)}
+        onToggleTheme={toggleTheme}
+        onToggleLanguage={toggleLanguage}
+      />
     </div>
   )
 }
