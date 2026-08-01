@@ -2,10 +2,11 @@
 
 import Link from "next/link"
 import { useEffect, useRef, useState } from "react"
-import { Github, ExternalLink } from "lucide-react"
+import { Github, ExternalLink, ChevronRight } from "lucide-react"
 import Terminal from "../components/Terminal"
 import LanguageToggle from "../components/LanguageToggle"
 import CommandPalette from "../components/CommandPalette"
+import ProjectDeepDive from "../components/ProjectDeepDive"
 import { useLanguage } from "../lib/language-context"
 import TechTicker from "../components/TechTicker"
 import { GitHubContributions } from "../components/GitHubContributions"
@@ -17,6 +18,7 @@ export default function Home() {
   const [isDark, setIsDark] = useState(true)
   const [activeSection, setActiveSection] = useState("")
   const [isPaletteOpen, setIsPaletteOpen] = useState(false)
+  const [selectedProject, setSelectedProject] = useState<number | null>(null)
   const sectionsRef = useRef<(HTMLElement | null)[]>([])
   const { dict: t, toggleLanguage } = useLanguage()
 
@@ -290,6 +292,26 @@ export default function Home() {
                           )}
                           <span>{item.link.label}</span>
                         </Link>
+                        {item.deepDive && (
+                          <button
+                            onClick={() => setSelectedProject(index)}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono text-muted-foreground hover:text-foreground border border-border hover:border-muted-foreground/50 rounded-md transition-all duration-300 bg-muted/5 hover:bg-muted/10 cursor-pointer ml-2"
+                          >
+                            <ChevronRight className="w-3.5 h-3.5" />
+                            <span>{t.viewDeepDive}</span>
+                          </button>
+                        )}
+                      </div>
+                    )}
+                    {!item.link && item.deepDive && (
+                      <div className="pt-1">
+                        <button
+                          onClick={() => setSelectedProject(index)}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono text-muted-foreground hover:text-foreground border border-border hover:border-muted-foreground/50 rounded-md transition-all duration-300 bg-muted/5 hover:bg-muted/10 cursor-pointer"
+                        >
+                          <ChevronRight className="w-3.5 h-3.5" />
+                          <span>{t.viewDeepDive}</span>
+                        </button>
                       </div>
                     )}
                   </div>
@@ -652,6 +674,13 @@ export default function Home() {
         onToggleTheme={toggleTheme}
         onToggleLanguage={toggleLanguage}
       />
+      {selectedProject !== null && (
+        <ProjectDeepDive
+          project={t.experiences[selectedProject]}
+          isOpen={selectedProject !== null}
+          onClose={() => setSelectedProject(null)}
+        />
+      )}
     </div>
   )
 }
