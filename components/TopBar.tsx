@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
+import { useRouter } from "next/navigation"
 import LanguageToggle from "./LanguageToggle"
 import { useTheme } from "./ThemeProvider"
 import { useLanguage } from "../lib/language-context"
@@ -11,7 +12,13 @@ const CommandPalette = dynamic(() => import("./CommandPalette"))
 export default function TopBar() {
   const { toggleTheme } = useTheme()
   const { toggleLanguage } = useLanguage()
+  const router = useRouter()
   const [isPaletteOpen, setIsPaletteOpen] = useState(false)
+
+  const handleToggleLanguage = useCallback(() => {
+    toggleLanguage()
+    router.refresh()
+  }, [toggleLanguage, router])
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -46,7 +53,7 @@ export default function TopBar() {
         isOpen={isPaletteOpen}
         onClose={() => setIsPaletteOpen(false)}
         onToggleTheme={toggleTheme}
-        onToggleLanguage={toggleLanguage}
+        onToggleLanguage={handleToggleLanguage}
       />
     </>
   )
