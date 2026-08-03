@@ -15,6 +15,10 @@ export const metadata: Metadata = {
   title: "Facundo Zin - Software Engineer",
   description:
     "AI Native Software Engineer specializing in scalable systems, LLM integration, and enterprise applications. C#, .NET, TypeScript, NestJS, React.",
+  metadataBase: new URL("https://facundozin.vercel.app"),
+  alternates: {
+    canonical: "/",
+  },
   openGraph: {
     title: "Facundo Zin - Software Engineer",
     description:
@@ -23,12 +27,21 @@ export const metadata: Metadata = {
     siteName: "Facundo Zin Portfolio",
     locale: "es_AR",
     type: "website",
+    images: [
+      {
+        url: "/og-image.svg",
+        width: 1200,
+        height: 630,
+        alt: "Facundo Zin - Software Engineer",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "Facundo Zin - Software Engineer",
     description:
       "AI Native Software Engineer specializing in scalable systems, LLM integration, and enterprise applications.",
+    images: ["/og-image.svg"],
   },
   robots: {
     index: true,
@@ -49,6 +62,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es" className={`${geist.variable}`} suppressHydrationWarning>
+      <head>
+        <link rel="preconnect" href="https://github-readme-stats-sigma-five.vercel.app" />
+        <link rel="dns-prefetch" href="https://cdn.jsdelivr.net" />
+      </head>
       <body className="font-sans antialiased">
         <LanguageProvider>
           <HtmlLang />

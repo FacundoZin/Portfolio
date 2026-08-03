@@ -182,4 +182,23 @@
     scrollbar-width: thin;
     scrollbar-color: var(--border) transparent;
   }
+
+  .mascot-wag {
+    animation: tail-wag 1.5s ease-in-out infinite;
+    transform-origin: 6px 14px;
+  }
+
+  .mascot-bob {
+    animation: head-bob 2s ease-in-out infinite;
+  }
+
+  @keyframes tail-wag {
+    0%, 100% { transform: rotate(0deg); }
+    50% { transform: rotate(12deg); }
+  }
+
+  @keyframes head-bob {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-0.8px); }
+  }
 }

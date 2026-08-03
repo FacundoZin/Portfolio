@@ -208,7 +208,7 @@ function renderIcon(icon: TechIcon, index: string) {
     >
       {icon.slug ? (
         <img
-          src={`https://skillicons.dev/icons?i=${icon.slug}`}
+          src={`/icons/${icon.slug}.svg`}
           alt={icon.name}
           className="w-10 h-10 rounded-xl object-contain select-none pointer-events-none bg-background/5"
           loading="lazy"
