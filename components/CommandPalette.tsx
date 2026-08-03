@@ -9,6 +9,7 @@ import {
   type Command,
 } from "../lib/commands"
 
+
 interface CommandPaletteProps {
   isOpen: boolean
   onClose: () => void
