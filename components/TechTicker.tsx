@@ -1,29 +1,73 @@
 "use client"
 
-import React from "react"
+import React, { useEffect, useRef, useState } from "react"
 
 interface TechIcon {
   name: string
   hoverColor: string
   slug?: string
   customSvg?: React.ReactNode
+  size?: string
+  noRadius?: boolean
 }
 
 const icons: TechIcon[] = [
-  {
-    name: "C#",
-    slug: "cs",
-    hoverColor: "hover:drop-shadow-[0_0_8px_rgba(35,145,32,0.4)]",
-  },
   {
     name: ".NET",
     slug: "dotnet",
     hoverColor: "hover:drop-shadow-[0_0_8px_rgba(81,43,212,0.4)]",
   },
   {
+    name: "C#",
+    slug: "cs",
+    hoverColor: "hover:drop-shadow-[0_0_8px_rgba(35,145,32,0.4)]",
+  },
+  {
+    name: "Docker",
+    slug: "docker",
+    hoverColor: "hover:drop-shadow-[0_0_8px_rgba(36,150,237,0.4)]",
+  },
+  {
+    name: "OpenCode",
+    slug: "opencode-wordmark-dark",
+    hoverColor: "hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.4)]",
+    size: "w-8 h-10",
+    noRadius: true,
+  },
+  {
     name: "TypeScript",
     slug: "ts",
     hoverColor: "hover:drop-shadow-[0_0_8px_rgba(49,120,198,0.4)]",
+  },
+  {
+    name: "Vue.js",
+    slug: "vue",
+    hoverColor: "hover:drop-shadow-[0_0_8px_rgba(79,192,141,0.4)]",
+  },
+  {
+    name: "NestJS",
+    slug: "nestjs",
+    hoverColor: "hover:drop-shadow-[0_0_8px_rgba(224,35,78,0.4)]",
+  },
+  {
+    name: "n8n",
+    slug: "n8n_pink+white_logo",
+    hoverColor: "hover:drop-shadow-[0_0_8px_rgba(255,111,0,0.4)]",
+  },
+  {
+    name: "Git",
+    slug: "git",
+    hoverColor: "hover:drop-shadow-[0_0_8px_rgba(240,80,50,0.4)]",
+  },
+  {
+    name: "GitHub",
+    slug: "github",
+    hoverColor: "hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.4)]",
+  },
+  {
+    name: "GitHub Actions",
+    slug: "githubactions",
+    hoverColor: "hover:drop-shadow-[0_0_8px_rgba(0,200,100,0.4)]",
   },
   {
     name: "Python",
@@ -41,29 +85,14 @@ const icons: TechIcon[] = [
     hoverColor: "hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.4)]",
   },
   {
-    name: "NestJS",
-    slug: "nestjs",
-    hoverColor: "hover:drop-shadow-[0_0_8px_rgba(224,35,78,0.4)]",
-  },
-  {
     name: "Node.js",
     slug: "nodejs",
     hoverColor: "hover:drop-shadow-[0_0_8px_rgba(104,179,100,0.4)]",
   },
   {
-    name: "Vue.js",
-    slug: "vue",
-    hoverColor: "hover:drop-shadow-[0_0_8px_rgba(79,192,141,0.4)]",
-  },
-  {
     name: "PostgreSQL",
     slug: "postgres",
     hoverColor: "hover:drop-shadow-[0_0_8px_rgba(51,103,145,0.4)]",
-  },
-  {
-    name: "Docker",
-    slug: "docker",
-    hoverColor: "hover:drop-shadow-[0_0_8px_rgba(36,150,237,0.4)]",
   },
   {
     name: "Tailwind CSS",
@@ -74,21 +103,6 @@ const icons: TechIcon[] = [
     name: "pnpm",
     slug: "pnpm",
     hoverColor: "hover:drop-shadow-[0_0_8px_rgba(254,200,50,0.4)]",
-  },
-  {
-    name: "Git",
-    slug: "git",
-    hoverColor: "hover:drop-shadow-[0_0_8px_rgba(240,80,50,0.4)]",
-  },
-  {
-    name: "GitHub",
-    slug: "github",
-    hoverColor: "hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.4)]",
-  },
-  {
-    name: "GitHub Actions",
-    slug: "githubactions",
-    hoverColor: "hover:drop-shadow-[0_0_8px_rgba(0,200,100,0.4)]",
   },
   {
     name: "Linux",
@@ -109,19 +123,6 @@ const icons: TechIcon[] = [
           <path d="M12 2L9 7l3 5-3 5 3 5" strokeLinecap="round" strokeLinejoin="round" />
           <path d="M12 2l3 5-3 5 3 5-3 5" strokeLinecap="round" strokeLinejoin="round" opacity="0.5" />
           <circle cx="12" cy="12" r="2" fill="currentColor" fillOpacity="0.3" />
-        </svg>
-      </div>
-    ),
-  },
-  {
-    name: "n8n",
-    hoverColor: "hover:drop-shadow-[0_0_8px_rgba(255,111,0,0.4)]",
-    customSvg: (
-      <div className="w-10 h-10 bg-[#1d1d20] rounded-xl flex items-center justify-center border border-border/20 shadow-inner">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="w-5 h-5 text-orange-400">
-          <path d="M4 20L12 4l8 16H4z" strokeLinejoin="round" />
-          <path d="M12 4v16" strokeWidth="1.5" opacity="0.4" />
-          <circle cx="12" cy="10" r="1.5" fill="currentColor" fillOpacity="0.4" />
         </svg>
       </div>
     ),
@@ -210,7 +211,7 @@ function renderIcon(icon: TechIcon, index: string) {
         <img
           src={`/icons/${icon.slug}.svg`}
           alt={icon.name}
-          className="w-10 h-10 rounded-xl object-contain select-none pointer-events-none bg-background/5"
+          className={`${icon.size || "w-10 h-10"} ${icon.noRadius ? "" : "rounded-xl"} object-contain select-none pointer-events-none bg-background/5`}
           loading="lazy"
         />
       ) : (
@@ -224,13 +225,34 @@ function renderIcon(icon: TechIcon, index: string) {
 }
 
 export default function TechTicker() {
+  const ref = useRef<HTMLDivElement>(null)
+  const [isVisible, setIsVisible] = useState(false)
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true)
+          observer.disconnect()
+        }
+      },
+      { threshold: 0.3 }
+    )
+
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
+
   return (
-    <div className="w-full py-8 border-y border-border/40 my-12 bg-muted/5 relative overflow-hidden group/marquee">
+    <div ref={ref} className="w-full py-8 border-y border-border/40 my-12 bg-muted/5 relative overflow-hidden group/marquee">
       <div className="flex w-full overflow-hidden whitespace-nowrap">
-        <div className="animate-marquee flex gap-12 sm:gap-16 items-center py-2 shrink-0 pr-12 sm:pr-16">
+        <div className={`flex gap-12 sm:gap-16 items-center py-2 shrink-0 pr-12 sm:pr-16 ${isVisible ? "animate-marquee" : ""}`}>
           {icons.map((icon, idx) => renderIcon(icon, `t1-${idx}`))}
         </div>
-        <div className="animate-marquee flex gap-12 sm:gap-16 items-center py-2 shrink-0 pr-12 sm:pr-16" aria-hidden="true">
+        <div className={`flex gap-12 sm:gap-16 items-center py-2 shrink-0 pr-12 sm:pr-16 ${isVisible ? "animate-marquee" : ""}`} aria-hidden="true">
           {icons.map((icon, idx) => renderIcon(icon, `t1c-${idx}`))}
         </div>
       </div>
