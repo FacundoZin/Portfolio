@@ -28,7 +28,7 @@ No `typecheck` script — README lists it but it's not in package.json. Use `npx
 - **`app/opengraph-image.tsx` / `app/twitter-image.tsx` / `app/apple-icon.tsx`** — PNG icons generated at request time via `next/og` from the shared `lib/og-image.tsx`. SVG is NOT used for social previews (platforms refuse to render it).
 - **`app/api/contributions/route.ts`** — GitHub contributions calendar proxy (multi-provider fallback, no auth needed)
 - **`app/api/github-activity/route.ts`** — GitHub public events proxy
-- **`components/`** — TopBar, SideNav, Terminal, TechTicker, CommandPalette, ThemeProvider, LanguageToggle, HtmlLang, SectionObserver, FooterInteractive, GitHubActivity, GitHubContributions, ExternalImage
+- **`components/`** — TopBar, SideNav, Terminal, TechTicker, CommandPalette, ThemeProvider, LanguageToggle, HtmlLang, SectionObserver, FooterInteractive, GitHubActivity, GitHubContributions, ExternalImage, ProjectDeepDive, ProjectDeepDiveButton, ArchitectureDiagram
 - **`components/sections/`** — IntroSection, ExperienceSection, EducationSection, PostsSection, ConnectSection, GitHubSection, GitHubStats
 - **`lib/`** — `i18n.ts` (dictionaries + types), `language-context.tsx` (provider + hook), `commands.ts` (CommandPalette command definitions), `og-image.tsx` (social preview renderer)
 
@@ -55,6 +55,10 @@ Interactive command-based widget. Commands: about, projects, skills, cv, goto (n
 ### CommandPalette
 
 Cmd+K command palette, lazy-loaded from TopBar (`next/dynamic`, `ssr: false`) and mounted only while open. Commands defined in `lib/commands.ts` with fuzzy matching and a stable `category` discriminator; the visible group labels are resolved from the dictionary. Modal dialog semantics (`role="dialog"`, focus trap, focus restore, body scroll lock, combobox/listbox ARIA).
+
+### Project Deep Dives
+
+`ProjectDeepDiveButton` (client) renders a "view case study" trigger next to experience items that carry a `deepDive` payload, and opens `ProjectDeepDive` — an accessible modal (`role="dialog"`, focus trap, Escape, body scroll lock, focus restore) containing an optional `ArchitectureDiagram` (inline, theme-aware SVG; only `asociarg` and `afrelay` are supported) plus accordions for Context / Challenge / Solution / Result. The copy lives in the `experiences` arrays in `lib/i18n.ts`. Only ASOCIARG and AFRelay have deep dives.
 
 ### HtmlLang
 

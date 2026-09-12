@@ -3,6 +3,7 @@ import Image from "next/image"
 import { Github, ExternalLink } from "lucide-react"
 import type { Dictionary } from "@/lib/i18n"
 import type { ReactNode } from "react"
+import ProjectDeepDiveButton from "@/components/ProjectDeepDiveButton"
 
 interface ExperienceSectionProps {
   dict: Dictionary
@@ -50,21 +51,24 @@ export default function ExperienceSection({ dict: t, githubSection }: Experience
                   ))}
                 </div>
               )}
-              {item.link && (
-                <div className="pt-1">
-                  <Link
-                    href={item.link.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono text-muted-foreground hover:text-foreground border border-border hover:border-muted-foreground/50 rounded-md transition-all duration-300 bg-muted/5 hover:bg-muted/10"
-                  >
-                    {item.link.type === "github" ? (
-                      <Github className="w-3.5 h-3.5" />
-                    ) : (
-                      <ExternalLink className="w-3.5 h-3.5" />
-                    )}
-                    <span>{item.link.label}</span>
-                  </Link>
+              {(item.link || item.deepDive) && (
+                <div className="pt-1 flex flex-wrap items-center gap-2">
+                  {item.link && (
+                    <Link
+                      href={item.link.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono text-muted-foreground hover:text-foreground border border-border hover:border-muted-foreground/50 rounded-md transition-all duration-300 bg-muted/5 hover:bg-muted/10"
+                    >
+                      {item.link.type === "github" ? (
+                        <Github className="w-3.5 h-3.5" />
+                      ) : (
+                        <ExternalLink className="w-3.5 h-3.5" />
+                      )}
+                      <span>{item.link.label}</span>
+                    </Link>
+                  )}
+                  <ProjectDeepDiveButton project={item} />
                 </div>
               )}
             </div>

@@ -15,6 +15,13 @@ export interface ExperienceItem {
   tech: readonly string[];
   link?: LinkField;
   image?: string;
+  deepDive?: {
+    context: string
+    challenge: string
+    solution: string
+    result: string
+    architecture?: string
+  }
 }
 
 export type EducationStatus = "completed" | "inProgress";
@@ -127,6 +134,13 @@ interface DictionaryFields {
   employment: string;
   project: string;
   experiences: readonly ExperienceItem[];
+  deepDiveContext: string;
+  deepDiveChallenge: string;
+  deepDiveSolution: string;
+  deepDiveResult: string;
+  deepDiveArchitecture: string;
+  viewDeepDive: string;
+  closeDeepDive: string;
   githubActivity: string;
   viewProfile: string;
   contributions: string;
@@ -191,6 +205,13 @@ const dictionaries: Record<Locale, DictionaryFields> = {
     experienceYears: "2024 — 2026",
     employment: "empleo",
     project: "proyecto",
+    deepDiveContext: "Contexto",
+    deepDiveChallenge: "Desafío",
+    deepDiveSolution: "Solución",
+    deepDiveResult: "Resultado",
+    deepDiveArchitecture: "Arquitectura",
+    viewDeepDive: "Ver caso de estudio",
+    closeDeepDive: "Cerrar",
     experiences: [
       {
         year: "2025",
@@ -230,6 +251,13 @@ const dictionaries: Record<Locale, DictionaryFields> = {
         description:
           "Plataforma para la gestión integral de asociaciones civiles. Módulos de socios, viajes, cobros, reservas, portal de pagos e integración con Mercado Pago, WhatsApp y ARCA. Arquitectura monolítica y modular lista para deploy en VPS con Docker.",
         tech: ["C#", ".NET", "DDD", "Docker", "Mercado Pago", "Multi-tenant"],
+        deepDive: {
+          context: "ASOCIARG es un SaaS para gestión de asociaciones civiles argentinas. El producto debía soportar múltiples asociaciones (multi-tenant), integraciones con pagos (Mercado Pago), mensajería (WhatsApp) y facturación (ARCA/AFIP). La web interna está desarrollada en Vue.js para uso de empleados del club, y la app mobile es para los socios.",
+          challenge: "El multi-tenancy era el desafío central: cada asociación tiene sus propios datos, configuraciones y flujos. Además, las integraciones externas (MP, WhatsApp, ARCA) requieren manejo de credenciales por tenant y sincronización de estados.",
+          solution: "Diseñé una arquitectura monolítica modular con DDD. Cada dominio (Socios, Cobranzas, Viajes, Reservas, Pagos) es un módulo independiente con su propio Aggregate Root, Value Objects y Repositorios. El multi-tenancy se resuelve a nivel de base de datos con Row-Level Security. Las integraciones usan un patrón de Credentials Manager con cifrado de claves privadas.",
+          result: "La plataforma está en producción con múltiples asociaciones activas. El sistema procesa pagos automáticos vía Mercado Pago, envía notificaciones por WhatsApp, y genera facturas electrónicas vía ARCA. El deploy es semi-automático con Docker Compose en VPS.",
+          architecture: "asociarg",
+        },
         link: {
           url: "https://www.asociarg.cloud/",
           label: "Sitio Web",
@@ -252,6 +280,13 @@ const dictionaries: Record<Locale, DictionaryFields> = {
           "Docker",
           "Cryptography",
         ],
+        deepDive: {
+          context: "AFRelay es un middleware open source que conecta aplicaciones con ARCA (ex AFIP) para facturación electrónica. Originalmente almacenaba certificados en Firestore, lo que limitaba la escalabilidad y generaba costos crecientes.",
+          challenge: "El sistema debía soportar múltiples clientes (CUITs) con sus propios certificados digitales. El almacenamiento en Firestore era costoso y no permitía cifrado a nivel de aplicación. Además, la resolución de credenciales por CUIT era estática.",
+          solution: "Migré el almacenamiento a PostgreSQL con cifrado AES-256 para claves privadas usando la librería `cryptography` de Python. Implementé un patrón de Credential Manager con resolución dinámica por CUIT. Usé SQLAlchemy ORM con Alembic para migraciones y Docker para containerización.",
+          result: "El sistema ahora soporta múltiples clientes de forma eficiente, con costos de infraestructura reducidos en un 80% comparado con Firestore. El cifrado de claves privadas cumple con estándares de seguridad. El proyecto está disponible como open source en GitHub.",
+          architecture: "afrelay",
+        },
         link: {
           url: "https://github.com/FacundoZin/AFRelay",
           label: "GitHub",
@@ -488,6 +523,13 @@ const dictionaries: Record<Locale, DictionaryFields> = {
     experienceYears: "2024 — 2026",
     employment: "employment",
     project: "project",
+    deepDiveContext: "Context",
+    deepDiveChallenge: "Challenge",
+    deepDiveSolution: "Solution",
+    deepDiveResult: "Result",
+    deepDiveArchitecture: "Architecture",
+    viewDeepDive: "View case study",
+    closeDeepDive: "Close",
     experiences: [
       {
         year: "2025",
@@ -527,6 +569,13 @@ const dictionaries: Record<Locale, DictionaryFields> = {
         description:
           "Platform for comprehensive management of civil associations. Modules for members, trips, payments, bookings, payment portal and integration with Mercado Pago, WhatsApp and ARCA. Monolithic and modular architecture ready for VPS deployment with Docker.",
         tech: ["C#", ".NET", "DDD", "Docker", "Mercado Pago", "Multi-tenant"],
+        deepDive: {
+          context: "ASOCIARG is a SaaS for managing Argentine civil associations. The product needed to support multiple associations (multi-tenant), with integrations for payments (Mercado Pago), messaging (WhatsApp), and invoicing (ARCA/AFIP). The internal web app is built with Vue.js for club employees, while the mobile app serves club members.",
+          challenge: "Multi-tenancy was the core challenge: each association has its own data, configurations, and workflows. Additionally, external integrations (MP, WhatsApp, ARCA) require per-tenant credential management and state synchronization.",
+          solution: "I designed a modular monolithic architecture with DDD. Each domain (Socios, Cobranzas, Viajes, Reservas, Pagos) is an independent module with its own Aggregate Root, Value Objects, and Repositories. Multi-tenancy is resolved at database level with Row-Level Security. Integrations use a Credentials Manager pattern with encrypted private keys.",
+          result: "The platform is in production with multiple active associations. The system processes automatic payments via Mercado Pago, sends WhatsApp notifications, and generates electronic invoices via ARCA. Deployment is semi-automated with Docker Compose on VPS.",
+          architecture: "asociarg",
+        },
         link: {
           url: "https://www.asociarg.cloud/",
           label: "Website",
@@ -549,6 +598,13 @@ const dictionaries: Record<Locale, DictionaryFields> = {
           "Docker",
           "Cryptography",
         ],
+        deepDive: {
+          context: "AFRelay is an open source middleware that connects applications with ARCA (ex-AFIP) for electronic invoicing. It originally stored certificates in Firestore, which limited scalability and generated growing costs.",
+          challenge: "The system needed to support multiple clients (CUITs) with their own digital certificates. Firestore storage was expensive and didn't allow application-level encryption. Additionally, credential resolution by CUIT was static.",
+          solution: "I migrated storage to PostgreSQL with AES-256 encryption for private keys using Python's `cryptography` library. I implemented a Credential Manager pattern with dynamic resolution by CUIT. Used SQLAlchemy ORM with Alembic for migrations and Docker for containerization.",
+          result: "The system now supports multiple clients efficiently, with infrastructure costs reduced by 80% compared to Firestore. Private key encryption meets security standards. The project is available as open source on GitHub.",
+          architecture: "afrelay",
+        },
         link: {
           url: "https://github.com/FacundoZin/AFRelay",
           label: "GitHub",
