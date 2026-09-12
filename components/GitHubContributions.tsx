@@ -47,6 +47,7 @@ export function GitHubContributions({ username }: { username: string }) {
   const [yearDropdownOpen, setYearDropdownOpen] = useState(false)
   const triggerRef = useRef<HTMLButtonElement>(null)
   const yearButtonRefs = useRef<(HTMLButtonElement | null)[]>([])
+  const dropdownRef = useRef<HTMLDivElement>(null)
 
   const yearsToShow = useMemo(
     () => (availableYears.length ? availableYears : [new Date().getFullYear()]),
@@ -61,6 +62,22 @@ export function GitHubContributions({ username }: { username: string }) {
     observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] })
     return () => observer.disconnect()
   }, [])
+
+  // Close the year dropdown on an outside click. This uses a document listener
+  // instead of a full-screen `fixed` backdrop on purpose: this component lives
+  // inside an animated section that keeps a `transform` (`.animate-fade-in-up`
+  // with fill-mode: forwards), and a transformed ancestor breaks `position:
+  // fixed`, so a backdrop would not cover the viewport.
+  useEffect(() => {
+    if (!yearDropdownOpen) return
+    const handlePointerDown = (event: PointerEvent) => {
+      if (!dropdownRef.current?.contains(event.target as Node)) {
+        setYearDropdownOpen(false)
+      }
+    }
+    document.addEventListener("pointerdown", handlePointerDown)
+    return () => document.removeEventListener("pointerdown", handlePointerDown)
+  }, [yearDropdownOpen])
 
   useEffect(() => {
     setLoading(true)
@@ -179,7 +196,7 @@ export function GitHubContributions({ username }: { username: string }) {
       <div className="flex items-center justify-between mb-2">
         <span className="text-xs text-muted-foreground">{totalLabel}</span>
 
-        <div className="relative">
+        <div ref={dropdownRef} className="relative">
           <button
             ref={triggerRef}
             onClick={() => setYearDropdownOpen(!yearDropdownOpen)}
@@ -197,7 +214,6 @@ export function GitHubContributions({ username }: { username: string }) {
 
           {yearDropdownOpen && (
             <>
-              <div className="fixed inset-0 z-40" onClick={() => setYearDropdownOpen(false)} />
               <div className="absolute right-0 top-full mt-1 z-50 min-w-[80px] py-1 bg-popover border border-border rounded-md shadow-md" role="listbox" aria-label={calendar.yearSelector}>
                 {yearsToShow.map((year, index) => (
                   <button
