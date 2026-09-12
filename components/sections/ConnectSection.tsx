@@ -1,5 +1,6 @@
 import Link from "next/link"
 import type { Dictionary } from "@/lib/i18n"
+import ExternalImage from "../ExternalImage"
 
 interface ConnectSectionProps {
   dict: Dictionary
@@ -48,9 +49,10 @@ export default function ConnectSection({ dict: t }: ConnectSectionProps) {
             className="group p-4 border border-border rounded-lg hover:border-muted-foreground/50 transition-all duration-300 hover:shadow-sm"
           >
             <div className="space-y-3">
-              <img
+              <ExternalImage
                 src="https://cdn.jsdelivr.net/gh/glincker/thesvg@main/public/icons/github/light.svg"
                 alt="GitHub"
+                fallbackText="GitHub"
                 width={24}
                 height={24}
                 loading="lazy"
@@ -70,9 +72,10 @@ export default function ConnectSection({ dict: t }: ConnectSectionProps) {
             className="group p-4 border border-border rounded-lg hover:border-muted-foreground/50 transition-all duration-300 hover:shadow-sm"
           >
             <div className="space-y-3">
-              <img
+              <ExternalImage
                 src="https://cdn.jsdelivr.net/gh/glincker/thesvg@main/public/icons/linkedin/default.svg"
                 alt="LinkedIn"
+                fallbackText="LinkedIn"
                 width={24}
                 height={24}
                 loading="lazy"
@@ -90,9 +93,10 @@ export default function ConnectSection({ dict: t }: ConnectSectionProps) {
             className="group p-4 border border-border rounded-lg hover:border-muted-foreground/50 transition-all duration-300 hover:shadow-sm"
           >
             <div className="space-y-3">
-              <img
+              <ExternalImage
                 src="https://cdn.jsdelivr.net/gh/glincker/thesvg@main/public/icons/gmail/default.svg"
                 alt="Gmail"
+                fallbackText="Gmail"
                 width={24}
                 height={24}
                 loading="lazy"
@@ -112,9 +116,10 @@ export default function ConnectSection({ dict: t }: ConnectSectionProps) {
             className="group p-4 border border-border rounded-lg hover:border-muted-foreground/50 transition-all duration-300 hover:shadow-sm"
           >
             <div className="space-y-3">
-              <img
+              <ExternalImage
                 src="https://cdn.jsdelivr.net/gh/glincker/thesvg@main/public/icons/whatsapp/default.svg"
                 alt="WhatsApp"
+                fallbackText="WhatsApp"
                 width={24}
                 height={24}
                 loading="lazy"

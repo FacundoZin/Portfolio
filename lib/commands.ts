@@ -1,18 +1,20 @@
 import type { ReactNode } from "react"
 
+export type CommandCategory = "navigation" | "actions" | "social" | "info"
+
 export interface Command {
   id: string
   label: string
   description?: string
   icon: ReactNode
-  category: "navigation" | "actions" | "social" | "info"
+  category: CommandCategory
   keywords: string[]
   shortcut?: string
   action: () => void
 }
 
 export interface CommandGroup {
-  label: string
+  category: CommandCategory
   commands: Command[]
 }
 
@@ -45,15 +47,9 @@ export function groupCommands(commands: Command[]): CommandGroup[] {
     groups[key].push(cmd)
   }
 
-  const order = ["navigation", "actions", "social", "info"]
-  const labels: Record<string, string> = {
-    navigation: "Navigation",
-    actions: "Actions",
-    social: "Social",
-    info: "Info",
-  }
+  const order: CommandCategory[] = ["navigation", "actions", "social", "info"]
 
   return order
     .filter((key) => groups[key]?.length)
-    .map((key) => ({ label: labels[key], commands: groups[key] }))
+    .map((key) => ({ category: key, commands: groups[key] }))
 }

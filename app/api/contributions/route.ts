@@ -1,5 +1,14 @@
 import { NextRequest, NextResponse } from "next/server"
 
+export const revalidate = 3600
+
+const CACHE_HEADERS = {
+  "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=86400",
+}
+
+// GitHub usernames are alphanumeric plus hyphen, max 39 chars.
+const GITHUB_USERNAME = /^[A-Za-z0-9-]{1,39}$/
+
 const LEVEL_MAP: Record<number, string> = {
   0: "NONE",
   1: "FIRST_QUARTILE",
@@ -12,6 +21,29 @@ interface FlatDay {
   date: string
   count: number
   level: number
+}
+
+interface ContributionsPayload {
+  contributions?: FlatDay[]
+}
+
+function jsonResponse(body: unknown, status = 200) {
+  return NextResponse.json(body, { status, headers: CACHE_HEADERS })
+}
+
+// Fetches and parses JSON defensively: network errors, non-ok responses and
+// non-JSON bodies all resolve to null instead of throwing.
+async function fetchJson<T>(
+  url: string,
+  init?: Parameters<typeof fetch>[1],
+): Promise<T | null> {
+  try {
+    const res = await fetch(url, init)
+    if (!res.ok) return null
+    return (await res.json()) as T
+  } catch {
+    return null
+  }
 }
 
 function toWeeks(contributions: FlatDay[]) {
@@ -54,42 +86,50 @@ function toWeeks(contributions: FlatDay[]) {
 }
 
 async function fetchContributions(username: string, yearParam: string): Promise<FlatDay[] | null> {
-  const primary = await fetch(`https://ghca.duyet.net/v1/${username}?y=${yearParam}`, {
-    next: { revalidate: 3600 },
-  }).then((r) => (r.ok ? r.json() : null)).catch(() => null)
+  const primary = await fetchJson<ContributionsPayload>(
+    `https://ghca.duyet.net/v1/${username}?y=${yearParam}`,
+    { next: { revalidate: 3600 } },
+  )
 
   if (primary?.contributions) return primary.contributions
 
-  const fallback = await fetch(`https://octo.aayush.cv/contributions/${username}`, {
-    next: { revalidate: 3600 },
-  }).then((r) => (r.ok ? r.json() : null)).catch(() => null)
+  const fallback = await fetchJson<ContributionsPayload>(
+    `https://octo.aayush.cv/contributions/${username}`,
+    { next: { revalidate: 3600 } },
+  )
 
   return fallback?.contributions ?? null
 }
 
 export async function GET(request: NextRequest) {
-  const username = request.nextUrl.searchParams.get("username") || "FacundoZin"
+  const usernameParam = request.nextUrl.searchParams.get("username")
+  const username = usernameParam || "FacundoZin"
+
+  if (!GITHUB_USERNAME.test(username)) {
+    return NextResponse.json({ error: "Invalid username" }, { status: 400 })
+  }
+
   const year = request.nextUrl.searchParams.get("year")
   const discoverYears = request.nextUrl.searchParams.get("discoverYears")
 
   if (discoverYears === "true") {
     const contributions = await fetchContributions(username, "all")
     if (!contributions?.length) {
-      return NextResponse.json({ availableYears: [] }, { status: 200 })
+      return jsonResponse({ availableYears: [] })
     }
     const years = new Set<number>()
     for (const d of contributions) {
       years.add(new Date(d.date + "T00:00:00Z").getUTCFullYear())
     }
     years.add(new Date().getUTCFullYear())
-    return NextResponse.json({ availableYears: [...years].sort((a, b) => b - a) })
+    return jsonResponse({ availableYears: [...years].sort((a, b) => b - a) })
   }
 
   const yearParam = year || "last"
   const contributions = await fetchContributions(username, yearParam)
 
   if (!contributions?.length) {
-    return NextResponse.json({ contributions: [], availableYears: [] }, { status: 200 })
+    return jsonResponse({ contributions: [], availableYears: [] })
   }
 
   const years = new Set<number>()
@@ -100,5 +140,5 @@ export async function GET(request: NextRequest) {
 
   const weeks = toWeeks(contributions)
 
-  return NextResponse.json({ contributions: weeks, availableYears: [...years].sort((a, b) => b - a) })
+  return jsonResponse({ contributions: weeks, availableYears: [...years].sort((a, b) => b - a) })
 }

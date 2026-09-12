@@ -1,7 +1,8 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { createPortal } from "react-dom"
+import { useLanguage } from "../lib/language-context"
 
 interface DayData {
   date: string
@@ -26,13 +27,17 @@ const LEVEL_MAP: Record<string, number> = {
 const LIGHT_CELLS = ["#ebedf0", "#9be9a8", "#40c463", "#30a14e", "#216e39"]
 const DARK_CELLS = ["#161b22", "#0e4429", "#006d32", "#26a641", "#39d353"]
 
-const DAY_LABELS = ["", "Mon", "", "Wed", "", "Fri", ""]
-const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
-
 const CELL = 11
 const GAP = 2
 
+function fill(template: string, vars: Record<string, string | number>): string {
+  return template.replace(/\{(\w+)\}/g, (_, key) => String(vars[key] ?? `{${key}}`))
+}
+
 export function GitHubContributions({ username }: { username: string }) {
+  const { dict, locale } = useLanguage()
+  const calendar = dict.contributionCalendar
+  const dateLocale = locale === "es" ? "es-AR" : "en-US"
   const [weeks, setWeeks] = useState<DayData[][]>([])
   const [loading, setLoading] = useState(true)
   const [tooltip, setTooltip] = useState<{ x: number; y: number; text: string } | null>(null)
@@ -40,6 +45,13 @@ export function GitHubContributions({ username }: { username: string }) {
   const [selectedYear, setSelectedYear] = useState<number | null>(null)
   const [availableYears, setAvailableYears] = useState<number[]>([])
   const [yearDropdownOpen, setYearDropdownOpen] = useState(false)
+  const triggerRef = useRef<HTMLButtonElement>(null)
+  const yearButtonRefs = useRef<(HTMLButtonElement | null)[]>([])
+
+  const yearsToShow = useMemo(
+    () => (availableYears.length ? availableYears : [new Date().getFullYear()]),
+    [availableYears]
+  )
 
   useEffect(() => {
     setIsDark(document.documentElement.classList.contains("dark"))
@@ -68,7 +80,11 @@ export function GitHubContributions({ username }: { username: string }) {
         setLoading(false)
       })
       .catch(() => setLoading(false))
+  }, [username, selectedYear])
 
+  // Year discovery does not depend on the selected year, so it runs on mount
+  // (and when the username changes) only.
+  useEffect(() => {
     fetch(`/api/contributions?username=${username}&discoverYears=true`)
       .then((r) => r.json())
       .then((data) => {
@@ -80,11 +96,43 @@ export function GitHubContributions({ username }: { username: string }) {
         }
       })
       .catch(() => {})
-  }, [username, selectedYear])
+  }, [username])
+
+  useEffect(() => {
+    if (!yearDropdownOpen) return
+    const selectedIdx = yearsToShow.findIndex((y) => y === selectedYear)
+    const idx = selectedIdx >= 0 ? selectedIdx : 0
+    yearButtonRefs.current[idx]?.focus()
+  }, [yearDropdownOpen, selectedYear, yearsToShow])
 
   const handleYearChange = (year: number) => {
     setSelectedYear(year)
     setYearDropdownOpen(false)
+  }
+
+  const handleTriggerKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>) => {
+    if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+      e.preventDefault()
+      setYearDropdownOpen(true)
+    } else if (e.key === "Escape") {
+      setYearDropdownOpen(false)
+    }
+  }
+
+  const handleOptionKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>, index: number) => {
+    if (e.key === "Escape") {
+      e.preventDefault()
+      setYearDropdownOpen(false)
+      triggerRef.current?.focus()
+    } else if (e.key === "ArrowDown") {
+      e.preventDefault()
+      const next = (index + 1) % yearsToShow.length
+      yearButtonRefs.current[next]?.focus()
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault()
+      const prev = (index - 1 + yearsToShow.length) % yearsToShow.length
+      yearButtonRefs.current[prev]?.focus()
+    }
   }
 
   const totalContributions = weeks.reduce(
@@ -111,27 +159,37 @@ export function GitHubContributions({ username }: { username: string }) {
     if (realDay) {
       const m = new Date(realDay.date).getMonth()
       if (m !== prevMonth) {
-        monthLabels.push({ index: wi, label: MONTHS[m] })
+        monthLabels.push({ index: wi, label: calendar.monthLabels[m] })
         prevMonth = m
       }
     }
   })
 
-  const yearsToShow = availableYears.length ? availableYears : [new Date().getFullYear()]
+  const totalLabel = selectedYear
+    ? fill(calendar.contributionsInYear, {
+        count: totalContributions.toLocaleString(dateLocale),
+        year: selectedYear,
+      })
+    : fill(calendar.contributionsInLastYear, {
+        count: totalContributions.toLocaleString(dateLocale),
+      })
 
   return (
     <div className="relative">
       <div className="flex items-center justify-between mb-2">
-        <span className="text-xs text-muted-foreground">
-          {totalContributions.toLocaleString()} contributions in {selectedYear ? selectedYear : "the last year"}
-        </span>
+        <span className="text-xs text-muted-foreground">{totalLabel}</span>
 
         <div className="relative">
           <button
+            ref={triggerRef}
             onClick={() => setYearDropdownOpen(!yearDropdownOpen)}
-            className="flex items-center gap-1 px-2 py-0.5 text-xs font-semibold text-muted-foreground bg-transparent border border-border rounded-md hover:bg-accent/50 transition-colors cursor-pointer"
+            onKeyDown={handleTriggerKeyDown}
+            aria-expanded={yearDropdownOpen}
+            aria-haspopup="listbox"
+            aria-label={calendar.yearSelector}
+            className="flex items-center gap-1 px-3 py-2 text-xs font-semibold text-muted-foreground bg-transparent border border-border rounded-md hover:bg-accent/50 transition-colors cursor-pointer sm:px-2 sm:py-0.5"
           >
-            {selectedYear ?? "Last year"}
+            {selectedYear ?? calendar.lastYear}
             <svg width="8" height="8" viewBox="0 0 8 8" className={`transition-transform ${yearDropdownOpen ? "rotate-180" : ""}`}>
               <path d="M0 2 L4 6 L8 2" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
@@ -140,11 +198,15 @@ export function GitHubContributions({ username }: { username: string }) {
           {yearDropdownOpen && (
             <>
               <div className="fixed inset-0 z-40" onClick={() => setYearDropdownOpen(false)} />
-              <div className="absolute right-0 top-full mt-1 z-50 min-w-[80px] py-1 bg-popover border border-border rounded-md shadow-md">
-                {yearsToShow.map((year) => (
+              <div className="absolute right-0 top-full mt-1 z-50 min-w-[80px] py-1 bg-popover border border-border rounded-md shadow-md" role="listbox" aria-label={calendar.yearSelector}>
+                {yearsToShow.map((year, index) => (
                   <button
                     key={year}
+                    ref={(el) => { yearButtonRefs.current[index] = el }}
                     onClick={() => handleYearChange(year)}
+                    onKeyDown={(e) => handleOptionKeyDown(e, index)}
+                    role="option"
+                    aria-selected={year === selectedYear}
                     className={`w-full px-3 py-1 text-left text-xs hover:bg-accent transition-colors cursor-pointer ${
                       year === selectedYear ? "font-semibold text-foreground" : "text-muted-foreground"
                     }`}
@@ -161,10 +223,10 @@ export function GitHubContributions({ username }: { username: string }) {
       <div className="overflow-x-auto scrollbar-thin pb-2 sm:pb-0 max-w-full">
         <div className="inline-flex">
           <div
-            className="flex flex-col shrink-0 text-[10px] text-muted-foreground/60 leading-none select-none"
+            className="flex flex-col shrink-0 text-[10px] text-muted-foreground leading-none select-none"
             style={{ gap: GAP, paddingTop: 20, paddingRight: 4 }}
           >
-            {DAY_LABELS.map((label, i) => (
+            {calendar.dayLabels.map((label, i) => (
               <div key={i} style={{ height: CELL }} className="flex items-center">
                 {label && <span>{label}</span>}
               </div>
@@ -176,7 +238,7 @@ export function GitHubContributions({ username }: { username: string }) {
               {weeks.map((week, wi) => {
                 const label = monthLabels.find((m) => m.index === wi)
                 return (
-                  <div key={wi} style={{ width: CELL }} className="flex items-end text-[10px] text-muted-foreground/60 leading-none select-none">
+                  <div key={wi} style={{ width: CELL }} className="flex items-end text-[10px] text-muted-foreground leading-none select-none">
                     {label && <span>{label.label}</span>}
                   </div>
                 )
@@ -193,7 +255,11 @@ export function GitHubContributions({ username }: { username: string }) {
                       onMouseEnter={(e) => {
                         if (!day.date) return
                         const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
-                        const text = `${day.contributionCount} contribution${day.contributionCount !== 1 ? "s" : ""} on ${new Date(day.date + "T00:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" })}`
+                        const dateLabel = new Date(day.date + "T00:00:00").toLocaleDateString(dateLocale, { weekday: "short", month: "short", day: "numeric", year: "numeric" })
+                        const text = fill(
+                          day.contributionCount === 1 ? calendar.contributionOn : calendar.contributionsOn,
+                          { count: day.contributionCount, date: dateLabel }
+                        )
                         setTooltip({
                           x: Math.min(Math.max(rect.left + rect.width / 2, 100), window.innerWidth - 100),
                           y: rect.top - 8,
@@ -221,8 +287,8 @@ export function GitHubContributions({ username }: { username: string }) {
         </div>
       </div>
 
-      <div className="flex items-center justify-end gap-1 mt-2 text-[10px] text-muted-foreground/60 select-none">
-        <span>Less</span>
+      <div className="flex items-center justify-end gap-1 mt-2 text-[10px] text-muted-foreground select-none">
+        <span>{calendar.less}</span>
         {[0, 1, 2, 3, 4].map((level) => (
           <div
             key={level}
@@ -230,7 +296,7 @@ export function GitHubContributions({ username }: { username: string }) {
             style={{ width: 10, height: 10, backgroundColor: cells[level] }}
           />
         ))}
-        <span>More</span>
+        <span>{calendar.more}</span>
       </div>
 
       {tooltip && createPortal(

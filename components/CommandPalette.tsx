@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef, useCallback, useMemo } from "react"
+import { useState, useEffect, useRef, useCallback, useMemo, useId } from "react"
 import { createPortal } from "react-dom"
 import { useLanguage } from "../lib/language-context"
 import {
@@ -11,14 +11,12 @@ import {
 
 
 interface CommandPaletteProps {
-  isOpen: boolean
   onClose: () => void
   onToggleTheme: () => void
   onToggleLanguage: () => void
 }
 
 export default function CommandPalette({
-  isOpen,
   onClose,
   onToggleTheme,
   onToggleLanguage,
@@ -28,7 +26,12 @@ export default function CommandPalette({
   const [activeIndex, setActiveIndex] = useState(0)
   const inputRef = useRef<HTMLInputElement>(null)
   const listRef = useRef<HTMLDivElement>(null)
+  const panelRef = useRef<HTMLDivElement>(null)
+  const previouslyFocusedRef = useRef<HTMLElement | null>(null)
   const itemRefs = useRef<(HTMLDivElement | null)[]>([])
+
+  const listboxId = `command-palette-${useId().replace(/:/g, "")}`
+  const optionId = (index: number) => `${listboxId}-option-${index}`
 
   const commands: Command[] = useMemo(
     () => [
@@ -234,25 +237,46 @@ export default function CommandPalette({
   const groups = useMemo(() => groupCommands(filtered), [filtered])
   const flatCommands = useMemo(() => groups.flatMap((g) => g.commands), [groups])
 
+  // The active index is clamped to the filtered list so aria-activedescendant
+  // never references an option that no longer exists.
+  const safeActiveIndex =
+    flatCommands.length === 0 ? 0 : Math.min(activeIndex, flatCommands.length - 1)
+
   useEffect(() => {
     setActiveIndex(0)
   }, [query])
 
   useEffect(() => {
-    if (isOpen) {
-      setQuery("")
-      setActiveIndex(0)
-      const raf = requestAnimationFrame(() => inputRef.current?.focus())
-      return () => cancelAnimationFrame(raf)
-    }
-  }, [isOpen])
+    setActiveIndex((i) =>
+      flatCommands.length === 0 ? 0 : Math.min(i, flatCommands.length - 1)
+    )
+  }, [flatCommands])
 
   useEffect(() => {
-    const el = itemRefs.current[activeIndex]
+    setQuery("")
+    setActiveIndex(0)
+    previouslyFocusedRef.current = document.activeElement as HTMLElement | null
+    const raf = requestAnimationFrame(() => inputRef.current?.focus())
+    return () => {
+      cancelAnimationFrame(raf)
+      previouslyFocusedRef.current?.focus()
+    }
+  }, [])
+
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = "hidden"
+    return () => {
+      document.body.style.overflow = previousOverflow
+    }
+  }, [])
+
+  useEffect(() => {
+    const el = itemRefs.current[safeActiveIndex]
     if (el) {
       el.scrollIntoView({ block: "nearest" })
     }
-  }, [activeIndex])
+  }, [safeActiveIndex])
 
   const executeCommand = useCallback(
     (cmd: Command) => {
@@ -263,8 +287,6 @@ export default function CommandPalette({
   )
 
   useEffect(() => {
-    if (!isOpen) return
-
     const handler = (e: KeyboardEvent) => {
       switch (e.key) {
         case "ArrowDown":
@@ -277,10 +299,28 @@ export default function CommandPalette({
           break
         case "Enter":
           e.preventDefault()
-          if (flatCommands[activeIndex]) {
-            executeCommand(flatCommands[activeIndex])
+          if (flatCommands[safeActiveIndex]) {
+            executeCommand(flatCommands[safeActiveIndex])
           }
           break
+        case "Tab": {
+          const panel = panelRef.current
+          if (!panel) break
+          const focusable = panel.querySelectorAll<HTMLElement>(
+            'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+          )
+          if (focusable.length === 0) break
+          const first = focusable[0]
+          const last = focusable[focusable.length - 1]
+          if (e.shiftKey && document.activeElement === first) {
+            e.preventDefault()
+            last.focus()
+          } else if (!e.shiftKey && document.activeElement === last) {
+            e.preventDefault()
+            first.focus()
+          }
+          break
+        }
         case "Escape":
           e.preventDefault()
           onClose()
@@ -290,17 +330,13 @@ export default function CommandPalette({
 
     window.addEventListener("keydown", handler)
     return () => window.removeEventListener("keydown", handler)
-  }, [isOpen, flatCommands, activeIndex, executeCommand, onClose])
+  }, [flatCommands, safeActiveIndex, executeCommand, onClose])
 
   if (typeof document === "undefined") return null
 
   return createPortal(
     <div
-      className={`fixed inset-0 z-[100] flex items-start justify-center pt-[15vh] transition-all duration-200 ${
-        isOpen
-          ? "opacity-100 pointer-events-auto"
-          : "opacity-0 pointer-events-none"
-      }`}
+      className="fixed inset-0 z-[100] flex items-start justify-center pt-[15vh] transition-all duration-200 opacity-100 pointer-events-auto"
       onClick={onClose}
     >
       {/* Backdrop */}
@@ -308,9 +344,11 @@ export default function CommandPalette({
 
       {/* Panel */}
       <div
-        className={`relative w-full max-w-md mx-4 bg-background border border-border rounded-xl shadow-2xl overflow-hidden transition-all duration-200 ${
-          isOpen ? "scale-100 translate-y-0" : "scale-95 -translate-y-2"
-        }`}
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label={t.commandPaletteLabel}
+        className="relative w-full max-w-md mx-4 bg-background border border-border rounded-xl shadow-2xl overflow-hidden transition-all duration-200 scale-100 translate-y-0"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Search input */}
@@ -331,17 +369,25 @@ export default function CommandPalette({
           <input
             ref={inputRef}
             type="text"
+            role="combobox"
+            aria-expanded={true}
+            aria-controls={listboxId}
+            aria-activedescendant={
+              flatCommands.length > 0 ? optionId(safeActiveIndex) : undefined
+            }
+            aria-autocomplete="list"
+            aria-label={t.commandPaletteLabel}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={
               locale === "es" ? "Buscar comandos..." : "Search commands..."
             }
-            className="flex-1 py-3 bg-transparent text-foreground placeholder-muted-foreground/50 outline-none text-sm font-mono"
+            className="flex-1 py-3 bg-transparent text-foreground placeholder-muted-foreground outline-none text-sm font-mono"
             autoComplete="off"
             autoCapitalize="off"
             spellCheck={false}
           />
-          <kbd className="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-mono text-muted-foreground/50 border border-border/50 rounded">
+          <kbd className="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-mono text-muted-foreground border border-border/50 rounded">
             esc
           </kbd>
         </div>
@@ -349,11 +395,12 @@ export default function CommandPalette({
         {/* Results */}
         <div
           ref={listRef}
+          id={listboxId}
           className="max-h-[320px] overflow-y-auto py-2 scrollbar-thin"
           role="listbox"
         >
           {flatCommands.length === 0 && (
-            <div className="px-4 py-8 text-center text-sm text-muted-foreground/50 font-mono">
+            <div className="px-4 py-8 text-center text-sm text-muted-foreground font-mono">
               {locale === "es" ? "Sin resultados" : "No results"}
             </div>
           )}
@@ -361,16 +408,17 @@ export default function CommandPalette({
           {groups.map((group) => {
             let globalIdx = flatCommands.indexOf(group.commands[0])
             return (
-              <div key={group.label}>
-                <div className="px-4 pt-2 pb-1 text-[10px] font-mono font-semibold tracking-wider text-muted-foreground/40 uppercase select-none">
-                  {group.label}
+              <div key={group.category}>
+                <div className="px-4 pt-2 pb-1 text-[10px] font-mono font-semibold tracking-wider text-muted-foreground uppercase select-none">
+                  {t.commandGroups[group.category]}
                 </div>
                 {group.commands.map((cmd) => {
                   const idx = globalIdx++
-                  const isActive = idx === activeIndex
+                  const isActive = idx === safeActiveIndex
                   return (
                     <div
                       key={cmd.id}
+                      id={optionId(idx)}
                       ref={(el) => { itemRefs.current[idx] = el }}
                       role="option"
                       aria-selected={isActive}
@@ -386,13 +434,13 @@ export default function CommandPalette({
                       <div className="flex-1 min-w-0">
                         <div className="text-sm truncate">{cmd.label}</div>
                         {cmd.description && (
-                          <div className="text-xs text-muted-foreground/50 truncate">
+                          <div className="text-xs text-muted-foreground truncate">
                             {cmd.description}
                           </div>
                         )}
                       </div>
                       {cmd.shortcut && (
-                        <kbd className="shrink-0 text-[10px] font-mono text-muted-foreground/40 border border-border/50 rounded px-1 py-0.5">
+                        <kbd className="shrink-0 text-[10px] font-mono text-muted-foreground border border-border/50 rounded px-1 py-0.5">
                           {cmd.shortcut}
                         </kbd>
                       )}
@@ -420,18 +468,18 @@ export default function CommandPalette({
         </div>
 
         {/* Footer hint */}
-        <div className="flex items-center justify-between px-4 py-2 border-t border-border text-[10px] font-mono text-muted-foreground/30 select-none">
+        <div className="flex items-center justify-between px-4 py-2 border-t border-border text-[10px] font-mono text-muted-foreground select-none">
           <div className="flex items-center gap-2">
             <span>↑↓</span>
-            <span>navigate</span>
+            <span>{t.commandHints.navigate}</span>
           </div>
           <div className="flex items-center gap-2">
             <span>↵</span>
-            <span>select</span>
+            <span>{t.commandHints.select}</span>
           </div>
           <div className="flex items-center gap-2">
             <span>esc</span>
-            <span>close</span>
+            <span>{t.commandHints.close}</span>
           </div>
         </div>
       </div>

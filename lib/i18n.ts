@@ -17,13 +17,84 @@ export interface ExperienceItem {
   image?: string;
 }
 
+export type EducationStatus = "completed" | "inProgress";
+
 export interface EducationItem {
   period: string;
   degree: string;
   institution: string;
   location: string;
-  status: string;
+  status: EducationStatus;
   description: string;
+}
+
+export interface TerminalDictionary {
+  welcome1: string;
+  welcome2: string;
+  helpTitle: string;
+  helpLines: readonly string[];
+  aboutLines: readonly string[];
+  projectLines: readonly string[];
+  skillsLines: readonly string[];
+  cvTitle: string;
+  cvEsLine: string;
+  cvEnLine: string;
+  cvOpening: string;
+  paletteOpening: string;
+  navigatingTo: string;
+  sectionNotFound: string;
+  notFound: string;
+  closeAria: string;
+  minimizeAria: string;
+}
+
+export interface ActivityDictionary {
+  justNow: string;
+  minutesAgo: string;
+  hoursAgo: string;
+  daysAgo: string;
+  monthAgo: string;
+  monthsAgo: string;
+  yearAgo: string;
+  yearsAgo: string;
+  pushedCommit: string;
+  pushedCommits: string;
+  createdWithRef: string;
+  createdWithoutRef: string;
+  forked: string;
+  starred: string;
+  pullRequest: string;
+  pullRequestNoNumber: string;
+  issue: string;
+  issueNoNumber: string;
+  fallback: string;
+  refTypes: {
+    branch: string;
+    repository: string;
+    tag: string;
+    unknown: string;
+  };
+  actions: {
+    opened: string;
+    closed: string;
+    reopened: string;
+    created: string;
+    deleted: string;
+    merged: string;
+  };
+}
+
+export interface ContributionCalendarDictionary {
+  dayLabels: readonly string[];
+  monthLabels: readonly string[];
+  contributionsInYear: string;
+  contributionsInLastYear: string;
+  lastYear: string;
+  less: string;
+  more: string;
+  contributionOn: string;
+  contributionsOn: string;
+  yearSelector: string;
 }
 
 export interface PostItem {
@@ -76,9 +147,26 @@ interface DictionaryFields {
   aiNative: string;
   terminalTooltip: string;
   terminalClickLabel: string;
-  terminalWelcome1: string;
-  terminalWelcome2: string;
-  terminalNotFound: string;
+  commandPaletteLabel: string;
+  commandGroups: {
+    navigation: string;
+    actions: string;
+    social: string;
+    info: string;
+  };
+  commandHints: {
+    navigate: string;
+    select: string;
+    close: string;
+  };
+  imageUnavailable: string;
+  navigateTo: string;
+  errorTitle: string;
+  errorDescription: string;
+  errorRetry: string;
+  terminal: TerminalDictionary;
+  activity: ActivityDictionary;
+  contributionCalendar: ContributionCalendarDictionary;
 }
 
 const dictionaries: Record<Locale, DictionaryFields> = {
@@ -199,7 +287,7 @@ const dictionaries: Record<Locale, DictionaryFields> = {
         degree: "Tecnicatura Universitaria en Programación",
         institution: "Universidad Tecnológica Nacional",
         location: "San Francisco, Córdoba",
-        status: "Completado",
+        status: "completed",
         description:
           "Formación técnica universitaria con énfasis en desarrollo de software, bases de datos, arquitectura de sistemas y metodologías de desarrollo. Actualmente realizando el trabajo final integrador de la carrera.",
       },
@@ -208,7 +296,7 @@ const dictionaries: Record<Locale, DictionaryFields> = {
         degree: "Ingeniería en Sistemas",
         institution: "Universidad Tecnológica Nacional",
         location: "San Francisco, Córdoba",
-        status: "En curso",
+        status: "inProgress",
         description:
           "Carrera universitaria con enfoque en el diseño, desarrollo y gestión de sistemas de información. Integrando conocimientos de organización y negocios con arquitectura de software, bases de datos, inteligencia artificial y metodologías de desarrollo.",
       },
@@ -260,10 +348,124 @@ const dictionaries: Record<Locale, DictionaryFields> = {
     aiNative: "AI Native",
     terminalTooltip: "Terminal interactiva",
     terminalClickLabel: "Clickeá:",
-    terminalWelcome1: "Bienvenido al shell interactivo de Facundo Zin.",
-    terminalWelcome2: "Escribí 'help' para ver los comandos disponibles.",
-    terminalNotFound:
-      "comando no encontrado: {cmd}. Escribí 'help' para más opciones.",
+    commandPaletteLabel: "Paleta de comandos",
+    commandGroups: {
+      navigation: "Navegación",
+      actions: "Acciones",
+      social: "Social",
+      info: "Información",
+    },
+    commandHints: {
+      navigate: "navegar",
+      select: "seleccionar",
+      close: "cerrar",
+    },
+    imageUnavailable: "Imagen no disponible",
+    navigateTo: "Ir a {section}",
+    errorTitle: "Algo salió mal",
+    errorDescription:
+      "Un error inesperado interrumpió esta página. Podés intentarlo de nuevo.",
+    errorRetry: "Reintentar",
+    terminal: {
+      welcome1: "Bienvenido al shell interactivo de Facundo Zin.",
+      welcome2: "Escribí 'help' para ver los comandos disponibles.",
+      helpTitle: "Comandos disponibles:",
+      helpLines: [
+        "  about    - Conocé más sobre Facundo",
+        "  projects - Listá los principales proyectos de desarrollo",
+        "  skills   - Mostrá el stack técnico principal",
+        "  cv       - Descargá el curriculum vitae",
+        "  goto     - Navegá a una sección (ej: goto work)",
+        "  palette  - Abrí la paleta de comandos (⌘K)",
+        "  clear    - Limpiá la pantalla de la terminal",
+      ],
+      aboutLines: [
+        "Facundo Zin - AI Native Software Engineer radicado en Argentina.",
+        "Enfocado en sistemas escalables, integración de LLMs y arquitecturas robustas.",
+      ],
+      projectLines: [
+        "• ASOCIARG: SaaS modular en C#/.NET para asociaciones civiles.",
+        "• AFRelay: middleware de facturación ARCA en Python con multitenancy.",
+        "• Rappi Delivery App: backend académico en NestJS con PostgreSQL.",
+      ],
+      skillsLines: [
+        "Lenguajes y Frameworks:",
+        "  C#, .NET, Python, TypeScript, NestJS, React, PostgreSQL",
+        "Herramientas y Arquitecturas:",
+        "  Docker, Alembic, DDD, SDD, CI/CD, Git",
+      ],
+      cvTitle: "Enlaces del CV:",
+      cvEsLine: "  - [ES] /cv/cv-facundozin-es.pdf",
+      cvEnLine: "  - [EN] /cv/cv-facundozin-en.pdf",
+      cvOpening: "Abriendo descargas...",
+      paletteOpening: "Abriendo la paleta de comandos...",
+      navigatingTo: "Navegando a {section}...",
+      sectionNotFound:
+        'Sección "{section}" no encontrada. Disponibles: {sections}',
+      notFound: "comando no encontrado: {cmd}. Escribí 'help' para más opciones.",
+      closeAria: "Cerrar terminal",
+      minimizeAria: "Minimizar terminal",
+    },
+    activity: {
+      justNow: "ahora mismo",
+      minutesAgo: "hace {count} min",
+      hoursAgo: "hace {count} h",
+      daysAgo: "hace {count} d",
+      monthAgo: "hace 1 mes",
+      monthsAgo: "hace {count} meses",
+      yearAgo: "hace 1 año",
+      yearsAgo: "hace {count} años",
+      pushedCommit: "Se subió 1 commit a {repo}",
+      pushedCommits: "Se subieron {count} commits a {repo}",
+      createdWithRef: "Se creó {refType} {ref} en {repo}",
+      createdWithoutRef: "Se creó {refType} en {repo}",
+      forked: "Se hizo fork de {repo}",
+      starred: "Se marcó con estrella {repo}",
+      pullRequest: "{action} PR #{number} en {repo}",
+      pullRequestNoNumber: "{action} PR en {repo}",
+      issue: "{action} issue #{number} en {repo}",
+      issueNoNumber: "{action} issue en {repo}",
+      fallback: "{type} en {repo}",
+      refTypes: {
+        branch: "rama",
+        repository: "repositorio",
+        tag: "etiqueta",
+        unknown: "desconocido",
+      },
+      actions: {
+        opened: "Abrió",
+        closed: "Cerró",
+        reopened: "Reabrió",
+        created: "Creó",
+        deleted: "Eliminó",
+        merged: "Fusionó",
+      },
+    },
+    contributionCalendar: {
+      dayLabels: ["", "lun", "", "mié", "", "vie", ""],
+      monthLabels: [
+        "ene",
+        "feb",
+        "mar",
+        "abr",
+        "may",
+        "jun",
+        "jul",
+        "ago",
+        "sep",
+        "oct",
+        "nov",
+        "dic",
+      ],
+      contributionsInYear: "{count} contribuciones en {year}",
+      contributionsInLastYear: "{count} contribuciones en el último año",
+      lastYear: "Último año",
+      less: "Menos",
+      more: "Más",
+      contributionOn: "{count} contribución el {date}",
+      contributionsOn: "{count} contribuciones el {date}",
+      yearSelector: "Seleccionar año",
+    },
   },
   en: {
     portfolio: "PORTFOLIO / 2026",
@@ -382,7 +584,7 @@ const dictionaries: Record<Locale, DictionaryFields> = {
         degree: "University Technician in Programming",
         institution: "Universidad Tecnologica Nacional",
         location: "San Francisco, Cordoba",
-        status: "Completed",
+        status: "completed",
         description:
           "University technical education focused on software development, databases, systems architecture and development methodologies. Currently completing the final integrated project of the degree.",
       },
@@ -391,7 +593,7 @@ const dictionaries: Record<Locale, DictionaryFields> = {
         degree: "Systems Engineering",
         institution: "Universidad Tecnologica Nacional",
         location: "San Francisco, Cordoba",
-        status: "In Progress",
+        status: "inProgress",
         description:
           "University degree focused on the design, development and management of information systems. Integrating organization and business knowledge with software architecture, databases, artificial intelligence and development methodologies.",
       },
@@ -442,9 +644,124 @@ const dictionaries: Record<Locale, DictionaryFields> = {
     aiNative: "AI Native",
     terminalTooltip: "Interactive terminal",
     terminalClickLabel: "Click:",
-    terminalWelcome1: "Welcome to Facundo Zin's interactive shell.",
-    terminalWelcome2: "Type 'help' to see all available commands.",
-    terminalNotFound: "command not found: {cmd}. Type 'help' for options.",
+    commandPaletteLabel: "Command palette",
+    commandGroups: {
+      navigation: "Navigation",
+      actions: "Actions",
+      social: "Social",
+      info: "Info",
+    },
+    commandHints: {
+      navigate: "navigate",
+      select: "select",
+      close: "close",
+    },
+    imageUnavailable: "Image unavailable",
+    navigateTo: "Navigate to {section}",
+    errorTitle: "Something went wrong",
+    errorDescription:
+      "An unexpected error interrupted this page. You can try again.",
+    errorRetry: "Try again",
+    terminal: {
+      welcome1: "Welcome to Facundo Zin's interactive shell.",
+      welcome2: "Type 'help' to see all available commands.",
+      helpTitle: "Available commands:",
+      helpLines: [
+        "  about    - Learn more about Facundo",
+        "  projects - List main software development projects",
+        "  skills   - Show primary technical stack",
+        "  cv       - Download curriculum vitae",
+        "  goto     - Navigate to section (e.g. goto work)",
+        "  palette  - Open command palette (⌘K)",
+        "  clear    - Clear the terminal screen",
+      ],
+      aboutLines: [
+        "Facundo Zin - AI Native Software Engineer based in Argentina.",
+        "Focusing on scalable systems, LLM integrations, and robust architectures.",
+      ],
+      projectLines: [
+        "• ASOCIARG: Modular C#/.NET SaaS for civil associations.",
+        "• AFRelay: Python-based ARCA invoicing middleware with multitenancy.",
+        "• Rappi Delivery App: NestJS academic backend with PostgreSQL.",
+      ],
+      skillsLines: [
+        "Languages & Frameworks:",
+        "  C#, .NET, Python, TypeScript, NestJS, React, PostgreSQL",
+        "Tools & Architectures:",
+        "  Docker, Alembic, DDD, SDD, CI/CD, Git",
+      ],
+      cvTitle: "CV Links:",
+      cvEsLine: "  - [ES] /cv/cv-facundozin-es.pdf",
+      cvEnLine: "  - [EN] /cv/cv-facundozin-en.pdf",
+      cvOpening: "Opening download dialogs...",
+      paletteOpening: "Opening command palette...",
+      navigatingTo: "Navigating to {section}...",
+      sectionNotFound:
+        'Section "{section}" not found. Available: {sections}',
+      notFound: "command not found: {cmd}. Type 'help' for options.",
+      closeAria: "Close terminal",
+      minimizeAria: "Minimize terminal",
+    },
+    activity: {
+      justNow: "just now",
+      minutesAgo: "{count}m ago",
+      hoursAgo: "{count}h ago",
+      daysAgo: "{count}d ago",
+      monthAgo: "1mo ago",
+      monthsAgo: "{count}mo ago",
+      yearAgo: "1y ago",
+      yearsAgo: "{count}y ago",
+      pushedCommit: "Pushed 1 commit to {repo}",
+      pushedCommits: "Pushed {count} commits to {repo}",
+      createdWithRef: "Created {refType} {ref} in {repo}",
+      createdWithoutRef: "Created {refType} in {repo}",
+      forked: "Forked {repo}",
+      starred: "Starred {repo}",
+      pullRequest: "{action} PR #{number} in {repo}",
+      pullRequestNoNumber: "{action} PR in {repo}",
+      issue: "{action} issue #{number} in {repo}",
+      issueNoNumber: "{action} issue in {repo}",
+      fallback: "{type} in {repo}",
+      refTypes: {
+        branch: "branch",
+        repository: "repository",
+        tag: "tag",
+        unknown: "unknown",
+      },
+      actions: {
+        opened: "opened",
+        closed: "closed",
+        reopened: "reopened",
+        created: "created",
+        deleted: "deleted",
+        merged: "merged",
+      },
+    },
+    contributionCalendar: {
+      dayLabels: ["", "Mon", "", "Wed", "", "Fri", ""],
+      monthLabels: [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec",
+      ],
+      contributionsInYear: "{count} contributions in {year}",
+      contributionsInLastYear: "{count} contributions in the last year",
+      lastYear: "Last year",
+      less: "Less",
+      more: "More",
+      contributionOn: "{count} contribution on {date}",
+      contributionsOn: "{count} contributions on {date}",
+      yearSelector: "Select year",
+    },
   },
 };
 

@@ -27,7 +27,7 @@ export default function ExperienceSection({ dict: t, githubSection }: Experience
               <div className="text-xl sm:text-2xl font-light text-muted-foreground group-hover:text-foreground transition-colors duration-500">
                 {item.year}
               </div>
-              <div className="text-xs font-mono text-muted-foreground/60 uppercase tracking-wider">
+              <div className="text-xs font-mono text-muted-foreground uppercase tracking-wider">
                 {item.type === "project" ? t.project : t.employment}
               </div>
             </div>

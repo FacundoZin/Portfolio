@@ -73,6 +73,7 @@
 }
 
 @theme inline {
+  --font-sans: var(--font-geist), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -118,6 +119,10 @@
   body {
     @apply bg-background text-foreground;
   }
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
 }
 
 @layer utilities {
@@ -158,6 +163,7 @@
     .animate-marquee,
     .animate-marquee:hover,
     .animate-bounce,
+    .animate-pulse,
     .animate-fade-in-up {
       animation: none !important;
     }
@@ -183,22 +189,4 @@
     scrollbar-color: var(--border) transparent;
   }
 
-  .mascot-wag {
-    animation: tail-wag 1.5s ease-in-out infinite;
-    transform-origin: 6px 14px;
-  }
-
-  .mascot-bob {
-    animation: head-bob 2s ease-in-out infinite;
-  }
-
-  @keyframes tail-wag {
-    0%, 100% { transform: rotate(0deg); }
-    50% { transform: rotate(12deg); }
-  }
-
-  @keyframes head-bob {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-0.8px); }
-  }
 }

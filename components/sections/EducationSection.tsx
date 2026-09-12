@@ -13,7 +13,9 @@ export default function EducationSection({ dict: t }: EducationSectionProps) {
       </div>
 
       <div className="space-y-8 sm:space-y-12">
-        {t.education.map((item, index) => (
+        {t.education.map((item, index) => {
+          const isInProgress = item.status === "inProgress"
+          return (
           <div
             key={index}
             className="group grid lg:grid-cols-12 gap-4 sm:gap-8 py-6 sm:py-8 border-b border-border/50 hover:border-border transition-colors duration-500"
@@ -24,12 +26,12 @@ export default function EducationSection({ dict: t }: EducationSectionProps) {
               </div>
               <div
                 className={`text-xs font-mono uppercase tracking-wider ${
-                  item.status === t.inProgress
+                  isInProgress
                     ? "text-green-500"
-                    : "text-muted-foreground/60"
+                    : "text-muted-foreground"
                 }`}
               >
-                {item.status}
+                {isInProgress ? t.inProgress : t.completed}
               </div>
             </div>
 
@@ -37,7 +39,7 @@ export default function EducationSection({ dict: t }: EducationSectionProps) {
               <div>
                 <h3 className="text-lg sm:text-xl font-medium">{item.degree}</h3>
                 <div className="text-muted-foreground">{item.institution}</div>
-                <div className="text-xs text-muted-foreground/60 mt-0.5">{item.location}</div>
+                <div className="text-xs text-muted-foreground mt-0.5">{item.location}</div>
               </div>
               <p className="text-muted-foreground leading-relaxed max-w-lg">{item.description}</p>
             </div>
@@ -57,7 +59,8 @@ export default function EducationSection({ dict: t }: EducationSectionProps) {
               </svg>
             </div>
           </div>
-        ))}
+          )
+        })}
       </div>
     </div>
   )

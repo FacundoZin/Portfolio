@@ -15,7 +15,7 @@ export default function LanguageToggle() {
   return (
     <button
       onClick={handleToggle}
-      className="group relative flex items-center h-8 w-20 rounded-full border border-border/40 bg-muted/40 p-[3px] cursor-pointer select-none transition-all duration-300 hover:border-muted-foreground/30 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background"
+      className="group relative flex items-center h-9 sm:h-8 w-20 rounded-full border border-border/40 bg-muted/40 p-[3px] cursor-pointer select-none transition-all duration-300 hover:border-muted-foreground/30 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background"
       aria-label={locale === "es" ? "Switch to English" : "Cambiar a español"}
     >
       <span

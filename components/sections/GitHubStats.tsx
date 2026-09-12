@@ -1,8 +1,10 @@
+import ExternalImage from "../ExternalImage"
+
 export default function GitHubStats() {
   return (
     <div className="grid sm:grid-cols-2 gap-4">
       <div className="p-6 border border-border rounded-lg bg-muted/5 flex items-center justify-center">
-        <img
+        <ExternalImage
           src="https://githubstats-livid.vercel.app/api?username=FacundoZin&show_icons=true&theme=onedark&hide_border=true&bg_color=00000000"
           alt="Facundo Zin GitHub contribution statistics"
           width={495}
@@ -12,7 +14,7 @@ export default function GitHubStats() {
         />
       </div>
       <div className="p-6 border border-border rounded-lg bg-muted/5 flex items-center justify-center">
-        <img
+        <ExternalImage
           src="https://githubstats-livid.vercel.app/api/top-langs/?username=FacundoZin&layout=compact&theme=onedark&hide_border=true&bg_color=00000000"
           alt="Top programming languages: C#, TypeScript, JavaScript"
           width={495}

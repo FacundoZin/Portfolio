@@ -18,12 +18,12 @@ interface GitHubSectionProps {
 export default function GitHubSection({ contributionsLabel, recentActivityLabel }: GitHubSectionProps) {
   return (
     <div className="space-y-6">
-      <div className="p-6 border border-border rounded-lg bg-muted/5 space-y-4">
+      <div className="p-4 sm:p-6 border border-border rounded-lg bg-muted/5 space-y-4">
         <div className="text-sm font-mono text-muted-foreground">{contributionsLabel}</div>
         <GitHubContributions username="FacundoZin" />
       </div>
 
-      <div className="p-6 border border-border rounded-lg bg-muted/5 space-y-4">
+      <div className="p-4 sm:p-6 border border-border rounded-lg bg-muted/5 space-y-4">
         <div className="text-sm font-mono text-muted-foreground">{recentActivityLabel}</div>
         <GitHubActivity username="FacundoZin" />
       </div>

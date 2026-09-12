@@ -9,20 +9,27 @@ interface TerminalLine {
   type: "input" | "output" | "error" | "welcome";
 }
 
-interface TerminalProps {
-  onOpenPalette?: () => void
-}
+const SECTIONS = ["intro", "work", "education", "thoughts", "connect"]
 
-export default function Terminal({ onOpenPalette }: TerminalProps) {
-  const { dict: t } = useLanguage()
+export default function Terminal() {
+  const { dict: t, locale } = useLanguage()
   const [isOpen, setIsOpen] = useState(false)
-  const [history, setHistory] = useState<TerminalLine[]>([
-    { text: t.terminalWelcome1, type: "welcome" },
-    { text: t.terminalWelcome2, type: "welcome" },
+  const [history, setHistory] = useState<TerminalLine[]>(() => [
+    { text: t.terminal.welcome1, type: "welcome" },
+    { text: t.terminal.welcome2, type: "welcome" },
   ])
   const [input, setInput] = useState("")
   const containerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+
+  // Re-seed the welcome banner when the language changes so the visible
+  // history always reflects the active locale.
+  useEffect(() => {
+    setHistory([
+      { text: t.terminal.welcome1, type: "welcome" },
+      { text: t.terminal.welcome2, type: "welcome" },
+    ])
+  }, [t])
 
   useEffect(() => {
     if (containerRef.current) {
@@ -45,23 +52,27 @@ export default function Terminal({ onOpenPalette }: TerminalProps) {
 
     if (trimmed === "palette" || trimmed === "cmdk") {
       setHistory((prev) => [...prev, inputLine,
-        { text: "Opening command palette...", type: "output" },
+        { text: t.terminal.paletteOpening, type: "output" },
       ])
-      onOpenPalette?.()
+      window.dispatchEvent(new CustomEvent("open-command-palette"))
       return
     }
 
     if (trimmed.startsWith("goto ")) {
       const section = trimmed.slice(5).trim()
-      const sections = ["intro", "work", "education", "thoughts", "connect"]
-      if (sections.includes(section)) {
+      if (SECTIONS.includes(section)) {
         document.getElementById(section)?.scrollIntoView({ behavior: "smooth" })
         setHistory((prev) => [...prev, inputLine,
-          { text: `Navigating to ${section}...`, type: "output" },
+          { text: t.terminal.navigatingTo.replace("{section}", section), type: "output" },
         ])
       } else {
         setHistory((prev) => [...prev, inputLine,
-          { text: `Section "${section}" not found. Available: ${sections.join(", ")}`, type: "error" },
+          {
+            text: t.terminal.sectionNotFound
+              .replace("{section}", section)
+              .replace("{sections}", SECTIONS.join(", ")),
+            type: "error",
+          },
         ])
       }
       return
@@ -70,52 +81,43 @@ export default function Terminal({ onOpenPalette }: TerminalProps) {
     switch (trimmed) {
       case "help":
         setHistory((prev) => [...prev, inputLine,
-          { text: "Available commands:", type: "output" },
-          { text: "  about    - Learn more about Facundo", type: "output" },
-          { text: "  projects - List main software development projects", type: "output" },
-          { text: "  skills   - Show primary technical stack", type: "output" },
-          { text: "  cv       - Download curriculum vitae", type: "output" },
-          { text: "  goto     - Navigate to section (e.g. goto work)", type: "output" },
-          { text: "  palette  - Open command palette (⌘K)", type: "output" },
-          { text: "  clear    - Clear the terminal screen", type: "output" },
+          { text: t.terminal.helpTitle, type: "output" },
+          ...t.terminal.helpLines.map((line): TerminalLine => ({ text: line, type: "output" })),
         ])
         break
       case "about":
         setHistory((prev) => [...prev, inputLine,
-          { text: "Facundo Zin - AI Native Software Engineer based in Argentina.", type: "output" },
-          { text: "Focusing on scalable systems, LLM integrations, and robust architectures.", type: "output" },
+          ...t.terminal.aboutLines.map((line): TerminalLine => ({ text: line, type: "output" })),
         ])
         break
       case "projects":
         setHistory((prev) => [...prev, inputLine,
-          { text: "• ASOCIARG: Modular C#/.NET SaaS for civil associations.", type: "output" },
-          { text: "• AFRelay: Python-based ARCA invoicing middleware with multitenancy.", type: "output" },
-          { text: "• Rappi Delivery App: NestJS academic backend with PostgreSQL.", type: "output" },
+          ...t.terminal.projectLines.map((line): TerminalLine => ({ text: line, type: "output" })),
         ])
         break
       case "skills":
         setHistory((prev) => [...prev, inputLine,
-          { text: "Languages & Frameworks:", type: "output" },
-          { text: "  C#, .NET, Python, TypeScript, NestJS, React, PostgreSQL", type: "output" },
-          { text: "Tools & Architectures:", type: "output" },
-          { text: "  Docker, Alembic, DDD, SDD, CI/CD, Git", type: "output" },
+          ...t.terminal.skillsLines.map((line): TerminalLine => ({ text: line, type: "output" })),
         ])
         break
       case "cv":
         setHistory((prev) => [...prev, inputLine,
-          { text: "CV Links:", type: "output" },
-          { text: "  - [ES] /cv/cv-facundozin-es.pdf", type: "output" },
-          { text: "  - [EN] /cv/cv-facundozin-en.pdf", type: "output" },
-          { text: "Opening download dialogs...", type: "output" },
+          { text: t.terminal.cvTitle, type: "output" },
+          { text: t.terminal.cvEsLine, type: "output" },
+          { text: t.terminal.cvEnLine, type: "output" },
+          { text: t.terminal.cvOpening, type: "output" },
         ])
-        window.open("/cv/cv-facundozin-es.pdf", "_blank")
+        window.open(
+          locale === "es" ? "/cv/cv-facundozin-es.pdf" : "/cv/cv-facundozin-en.pdf",
+          "_blank",
+        )
         break
       case "clear":
         setHistory([])
         break
       default:
         setHistory((prev) => [...prev, inputLine,
-          { text: t.terminalNotFound.replace("{cmd}", cmd), type: "error" },
+          { text: t.terminal.notFound.replace("{cmd}", cmd), type: "error" },
         ])
     }
   }
@@ -175,7 +177,7 @@ export default function Terminal({ onOpenPalette }: TerminalProps) {
                 setIsOpen(false)
               }}
               className="w-2.5 h-2.5 rounded-full bg-[#ff5f56] flex items-center justify-center text-[6px] text-black hover:opacity-85 cursor-pointer"
-              aria-label="Close"
+              aria-label={t.terminal.closeAria}
             />
             <button
               onClick={(e) => {
@@ -183,7 +185,7 @@ export default function Terminal({ onOpenPalette }: TerminalProps) {
                 setIsOpen(false)
               }}
               className="w-2.5 h-2.5 rounded-full bg-[#ffbd2e] flex items-center justify-center text-[6px] text-black hover:opacity-85 cursor-pointer"
-              aria-label="Minimize"
+              aria-label={t.terminal.minimizeAria}
             />
             <span className="w-2.5 h-2.5 rounded-full bg-[#27c93f]" />
           </div>
@@ -194,7 +196,7 @@ export default function Terminal({ onOpenPalette }: TerminalProps) {
               setIsOpen(false)
             }}
             className="text-muted-foreground hover:text-foreground transition-colors duration-200 cursor-pointer"
-            aria-label="Close terminal"
+            aria-label={t.terminal.closeAria}
           >
             <X className="w-3.5 h-3.5" />
           </button>

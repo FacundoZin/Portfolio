@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react"
 import { GitCommit, GitFork, Star, Plus, GitPullRequest, Bug, GitBranch, ExternalLink } from "lucide-react"
+import { useLanguage } from "../lib/language-context"
+import type { ActivityDictionary } from "../lib/i18n"
 
 interface GitHubEvent {
   id: string
@@ -11,18 +13,23 @@ interface GitHubEvent {
   created_at: string
 }
 
-function timeAgo(date: string): string {
+function fill(template: string, vars: Record<string, string | number>): string {
+  return template.replace(/\{(\w+)\}/g, (_, key) => String(vars[key] ?? `{${key}}`))
+}
+
+function timeAgo(date: string, a: ActivityDictionary): string {
   const seconds = Math.floor((Date.now() - new Date(date).getTime()) / 1000)
-  if (seconds < 60) return "just now"
+  if (seconds < 60) return a.justNow
   const minutes = Math.floor(seconds / 60)
-  if (minutes < 60) return `${minutes}m ago`
+  if (minutes < 60) return fill(a.minutesAgo, { count: minutes })
   const hours = Math.floor(minutes / 60)
-  if (hours < 24) return `${hours}h ago`
+  if (hours < 24) return fill(a.hoursAgo, { count: hours })
   const days = Math.floor(hours / 24)
-  if (days < 30) return `${days}d ago`
+  if (days < 30) return fill(a.daysAgo, { count: days })
   const months = Math.floor(days / 30)
-  if (months < 12) return `${months}mo ago`
-  return `${Math.floor(months / 12)}y ago`
+  if (months < 12) return fill(months === 1 ? a.monthAgo : a.monthsAgo, { count: months })
+  const years = Math.floor(months / 12)
+  return fill(years === 1 ? a.yearAgo : a.yearsAgo, { count: years })
 }
 
 function isNoise(event: GitHubEvent, username: string): boolean {
@@ -43,7 +50,7 @@ function isNoise(event: GitHubEvent, username: string): boolean {
   return false
 }
 
-function describeEvent(event: GitHubEvent): { icon: React.ReactNode; desc: string } {
+function describeEvent(event: GitHubEvent, a: ActivityDictionary): { icon: React.ReactNode; desc: string } {
   const repoShort = event.repo.name
   const payload = event.payload
 
@@ -52,52 +59,63 @@ function describeEvent(event: GitHubEvent): { icon: React.ReactNode; desc: strin
       const count = (payload.commits as unknown[] | undefined)?.length ?? 0
       return {
         icon: <GitCommit className="w-3.5 h-3.5" />,
-        desc: `Pushed ${count} commit${count !== 1 ? "s" : ""} to ${repoShort}`,
+        desc: fill(count === 1 ? a.pushedCommit : a.pushedCommits, { count, repo: repoShort }),
       }
     }
     case "CreateEvent": {
       const refType = (payload.ref_type as string) ?? "unknown"
       const ref = (payload.ref as string) ?? ""
+      const refTypeLabel = a.refTypes[refType as keyof typeof a.refTypes] ?? refType
       return {
         icon: <Plus className="w-3.5 h-3.5" />,
-        desc: ref ? `Created ${refType} ${ref} in ${repoShort}` : `Created ${refType} in ${repoShort}`,
+        desc: ref
+          ? fill(a.createdWithRef, { refType: refTypeLabel, ref, repo: repoShort })
+          : fill(a.createdWithoutRef, { refType: refTypeLabel, repo: repoShort }),
       }
     }
     case "ForkEvent":
       return {
         icon: <GitFork className="w-3.5 h-3.5" />,
-        desc: `Forked ${repoShort}`,
+        desc: fill(a.forked, { repo: repoShort }),
       }
     case "WatchEvent":
       return {
         icon: <Star className="w-3.5 h-3.5" />,
-        desc: `Starred ${repoShort}`,
+        desc: fill(a.starred, { repo: repoShort }),
       }
     case "PullRequestEvent": {
       const action = (payload.action as string) ?? ""
+      const actionLabel = (a.actions as Record<string, string>)[action] ?? action
       const prNumber = (payload.number as number) ?? (payload.pull_request as Record<string, unknown> | undefined)?.number
       return {
         icon: <GitPullRequest className="w-3.5 h-3.5" />,
-        desc: prNumber ? `${action} PR #${prNumber} in ${repoShort}` : `${action} PR in ${repoShort}`,
+        desc: prNumber
+          ? fill(a.pullRequest, { action: actionLabel, number: prNumber, repo: repoShort })
+          : fill(a.pullRequestNoNumber, { action: actionLabel, repo: repoShort }),
       }
     }
     case "IssuesEvent": {
       const action = (payload.action as string) ?? ""
+      const actionLabel = (a.actions as Record<string, string>)[action] ?? action
       const issueNumber = (payload.number as number) ?? (payload.issue as Record<string, unknown> | undefined)?.number
       return {
         icon: <Bug className="w-3.5 h-3.5" />,
-        desc: issueNumber ? `${action} issue #${issueNumber} in ${repoShort}` : `${action} issue in ${repoShort}`,
+        desc: issueNumber
+          ? fill(a.issue, { action: actionLabel, number: issueNumber, repo: repoShort })
+          : fill(a.issueNoNumber, { action: actionLabel, repo: repoShort }),
       }
     }
     default:
       return {
         icon: <GitBranch className="w-3.5 h-3.5" />,
-        desc: `${event.type.replace("Event", "")} in ${repoShort}`,
+        desc: fill(a.fallback, { type: event.type.replace("Event", ""), repo: repoShort }),
       }
   }
 }
 
 export function GitHubActivity({ username }: { username: string }) {
+  const { dict } = useLanguage()
+  const activity = dict.activity
   const [events, setEvents] = useState<GitHubEvent[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -131,7 +149,7 @@ export function GitHubActivity({ username }: { username: string }) {
   return (
     <div className="space-y-3">
       {events.map((event) => {
-        const { icon, desc } = describeEvent(event)
+        const { icon, desc } = describeEvent(event, activity)
         const repoUrl = `https://github.com/${event.repo.name}`
         return (
           <a
@@ -150,7 +168,7 @@ export function GitHubActivity({ username }: { username: string }) {
               </p>
             </div>
             <div className="flex items-center gap-1.5 shrink-0">
-              <span className="text-xs text-muted-foreground/50 font-mono">{timeAgo(event.created_at)}</span>
+              <span className="text-xs text-muted-foreground font-mono">{timeAgo(event.created_at, activity)}</span>
               <ExternalLink className="w-3 h-3 text-muted-foreground/30 group-hover:text-muted-foreground/60 transition-colors duration-300" />
             </div>
           </a>
