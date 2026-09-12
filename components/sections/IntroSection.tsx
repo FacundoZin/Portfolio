@@ -62,7 +62,7 @@ export default function IntroSection({ dict: t }: IntroSectionProps) {
 
       <div className="lg:col-span-2 flex flex-col justify-center items-center space-y-6 sm:space-y-8 mt-8 lg:mt-0">
         <div className="relative lg:self-end">
-          <div className="absolute -top-[34px] left-[55px] sm:left-[80px] z-10 animate-bounce" style={{ animationDuration: "3s" }}>
+          <div className="absolute -top-[34px] left-[55px] sm:left-[80px] z-10 animate-float">
             {/* Twemoji flag asset — see public/emoji/flag-ar.svg. Uses an SVG
                 instead of the native 🇦🇷 emoji because Windows does not render
                 flag emoji (it shows "AR" instead). */}

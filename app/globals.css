@@ -159,10 +159,26 @@
     animation-play-state: paused;
   }
 
+  /* Gentle vertical float used by the hero flag. Smooth ease-in-out instead of
+     Tailwind's `animate-bounce`, whose keyframes have hard timing stops. */
+  .animate-float {
+    animation: float 2.2s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%,
+    100% {
+      transform: translateY(-5px);
+    }
+    50% {
+      transform: translateY(3px);
+    }
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .animate-marquee,
     .animate-marquee:hover,
-    .animate-bounce,
+    .animate-float,
     .animate-pulse,
     .animate-fade-in-up {
       animation: none !important;
